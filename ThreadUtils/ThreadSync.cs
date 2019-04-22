@@ -39,6 +39,8 @@ namespace ThreadUtils
 
         public bool CrashOnExcept { get; set; }
 
+        public object State { get; set; }
+
         protected SingleThreadWorker(int core, ThreadPriorityLevel priority)
         {
             _Core = core;
@@ -57,7 +59,8 @@ namespace ThreadUtils
             _thread.Start();
         }
 
-        public static event EventHandler<ExceptionEventArgs> ExceptionThrown;
+        public static event EventHandler<ExceptionEventArgs> GlobalExceptionThrown;
+        public event EventHandler<ExceptionEventArgs> InstanceExceptionThrown;
 
         public bool BusySpin { get; set; } = false;
 
@@ -91,7 +94,9 @@ namespace ThreadUtils
                                 throw new Exception("STE Crash: " + GetType(), ex);
                             }
 
-                            ExceptionThrown?.Invoke(this, new ExceptionEventArgs(ex));
+                            var e = new ExceptionEventArgs(ex);
+                            GlobalExceptionThrown?.Invoke(this, e);
+                            InstanceExceptionThrown?.Invoke(this, e);
                         }
                     }
                 }
